@@ -1,5 +1,6 @@
 var rtddata = require('./rtd-data');
 var versionCompare = require('./version-compare');
+var pullRequestWarning = require('./pull-request-warning');
 
 
 function injectFooter(data) {
@@ -76,6 +77,9 @@ function init() {
         success: function (data) {
             if (data.show_version_warning) {
                 versionCompare.init(data.version_compare);
+            }
+            if (data.version_type === 'external') {
+                pullRequestWarning.init(data);
             }
             injectFooter(data);
             setupBookmarkCSRFToken();

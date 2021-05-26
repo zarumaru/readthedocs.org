@@ -235,6 +235,10 @@ class BaseFooterHTML(CachedResponseMixin, APIView):
             'version_active': version.active,
             'version_compare': version_compare_data,
             'version_supported': version.supported,
+            'version_type': version.type,
+            'version_name': version.verbose_name,
+            'vcs_url': version.vcs_url,
+            'version_identifier': version.identifier,
         }
 
         return Response(resp_data)
