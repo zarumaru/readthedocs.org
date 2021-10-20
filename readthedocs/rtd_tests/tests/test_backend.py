@@ -1,14 +1,12 @@
-# -*- coding: utf-8 -*-
-
 import os
+import textwrap
 from os.path import exists
 from tempfile import mkdtemp
-import textwrap
+from unittest.mock import Mock, patch
 
-from django.test import TestCase
 import django_dynamic_fixture as fixture
 from django.contrib.auth.models import User
-from unittest.mock import Mock, patch
+from django.test import TestCase, override_settings
 
 from readthedocs.builds.constants import EXTERNAL
 from readthedocs.builds.models import Version
@@ -23,6 +21,7 @@ from readthedocs.rtd_tests.utils import (
     make_test_git,
     make_test_hg,
 )
+from readthedocs.vcs_support.backends import git as git_backend
 
 
 class TestGitBackend(TestCase):
@@ -239,6 +238,7 @@ class TestGitBackend(TestCase):
         valid, _ = repo.validate_submodules(self.dummy_conf)
         self.assertTrue(valid)
 
+    @override_settings(ALLOW_PRIVATE_REPOS=False)
     def test_check_invalid_submodule_urls(self):
         repo = self.project.vcs_repo()
         repo.update()
@@ -251,6 +251,15 @@ class TestGitBackend(TestCase):
             str(e.exception),
             RepositoryError.INVALID_SUBMODULES.format(['invalid']),
         )
+
+    @override_settings(ALLOW_PRIVATE_REPOS=True)
+    @patch.object(git_backend.Backend, 'checkout_submodules')
+    def test_check_private_submodule_urls(self, checkout_submodules_mock):
+        repo = self.project.vcs_repo()
+        repo.update()
+        repo.checkout('invalidsubmodule')
+        repo.update_submodules(self.dummy_conf)
+        checkout_submodules_mock.assert_called_once()
 
     def test_invalid_submodule_is_ignored(self):
         repo = self.project.vcs_repo()
